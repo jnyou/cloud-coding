@@ -18,7 +18,10 @@
     </parent>
 
     <modules>
+        <module>platform-auth</module>
         <module>platform-gateway</module>
+        <module>platform-common</module>
+        <module>cloud-member</module>
     </modules>
 
 </project>

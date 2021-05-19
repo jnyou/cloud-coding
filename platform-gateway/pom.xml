@@ -12,6 +12,7 @@
     <version>1.0-SNAPSHOT</version>
     <name>platform-gateway</name>
     <description>platform gateway module</description>
+
     <properties>
         <java.version>1.8</java.version>
     </properties>
