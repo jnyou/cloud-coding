@@ -1,6 +1,7 @@
 package io.commchina.cloudmember.biz;
 
 
+import io.commchina.http.req.SocialUserReq;
 import io.commchina.http.req.UserLoginReq;
 import io.commchina.http.resp.MemberInfoResp;
 
@@ -15,7 +16,7 @@ import io.commchina.http.resp.MemberInfoResp;
  **/
 public interface ThirdLoginStrategy {
 
-    MemberInfoResp strategyLogin(UserLoginReq userLoginVo);
+    MemberInfoResp strategyLogin(SocialUserReq socialUserReq);
 
     LoginEnum LOGIN_ENUM();
 }

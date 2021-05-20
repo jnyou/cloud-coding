@@ -20,13 +20,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient("member-service")
 public interface CloudMemberRemote {
 
-    @PostMapping("/member/member/regist")
-    R regist(@RequestBody UserRegisterReq userRegisterReq);
+//    @PostMapping("/member/member/regist")
+//    R regist(@RequestBody UserRegisterReq userRegisterReq);
+//
+//    @PostMapping("/member/member/login")
+//    R login(@RequestBody UserLoginReq userLoginReq);
 
-    @PostMapping("/member/member/login")
-    R login(@RequestBody UserLoginReq userLoginReq);
-
-    @PostMapping("/member/member/oauth2/login")
+    @PostMapping("/api/v1/oauth2/login")
     R oauthLogin(@RequestBody SocialUserReq socialUserReq);
 
 

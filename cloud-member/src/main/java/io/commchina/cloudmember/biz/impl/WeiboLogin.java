@@ -2,6 +2,7 @@ package io.commchina.cloudmember.biz.impl;
 
 import io.commchina.cloudmember.biz.LoginEnum;
 import io.commchina.cloudmember.biz.ThirdLoginStrategy;
+import io.commchina.http.req.SocialUserReq;
 import io.commchina.http.req.UserLoginReq;
 import io.commchina.http.resp.MemberInfoResp;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +22,10 @@ import org.springframework.stereotype.Service;
 public class WeiboLogin implements ThirdLoginStrategy {
 
     @Override
-    public MemberInfoResp strategyLogin(UserLoginReq userLoginReq) {
+    public MemberInfoResp strategyLogin(SocialUserReq socialUserReq) {
         // TODO 微博登录逻辑
 
-        log.info("登录名{}，登录密码{}",userLoginReq.getLoginAccount(),userLoginReq.getPassword());
+        log.info("社交用户唯一ID：{}",socialUserReq.getUid());
         return null;
     }
 
