@@ -5,16 +5,16 @@ import com.alibaba.fastjson.TypeReference;
 import io.commchina.constant.AuthServerConstant;
 import io.commchina.http.resp.MemberInfoResp;
 import io.commchina.remote.CloudMemberRemote;
-import io.commchina.remote.resp.SocialUserReq;
+import io.commchina.http.req.SocialUserReq;
 import io.commchina.tools.HttpUtils;
 import io.commchina.tools.R;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
@@ -30,8 +30,9 @@ import java.util.Map;
  * @author: JnYou
  **/
 @Slf4j
-@Controller
-public class OAuth2Controller {
+//@Controller
+@RestController
+public class OAuth2CallbackController {
 
     @Autowired
     CloudMemberRemote cloudMemberRemote;
@@ -43,7 +44,7 @@ public class OAuth2Controller {
      * @param session
      */
     @GetMapping("/oauth2.0/weibo/success")
-    public String weibo(@RequestParam("code") String code, HttpSession session) throws Exception {
+    public MemberInfoResp weibo(@RequestParam("code") String code, HttpSession session) throws Exception {
         // 根据code换取AccessToken  https://api.weibo.com/oauth2/access_token?client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&grant_type=authorization_code&redirect_uri=YOUR_REGISTERED_REDIRECT_URI&code=CODE
         Map<String,String> map = new HashMap<>();
         map.put("client_id","1229245080");
@@ -69,20 +70,23 @@ public class OAuth2Controller {
                 // 子域session共享问题，发session id 的时候指定为父级域名
                 session.setAttribute(AuthServerConstant.LOGIN_USER, memberInfoResp);
                 // 成功之后回到主页面
-                return "redirect:http://gmall.com";
+//                return "redirect:http://gmall.com";
+                return memberInfoResp;
             }else {
                 log.error("======登录失败======");
                 //2.2 否则返回登录页
                 errors.put("msg", "登录失败，请重试");
                 session.setAttribute("errors", errors);
-                return "redirect:http://auth.gmall.com/login.html";
+//                return "redirect:http://auth.gmall.com/login.html";
+                return null;
             }
         } else {
             log.error("======登录失败======");
             // 失败跳转到登录页面
             errors.put("msg", "获得第三方授权失败，请重试");
             session.setAttribute("errors", errors);
-            return "redirect:http://auth.gmall.com/login.html";
+//            return "redirect:http://auth.gmall.com/login.html";
+            return null;
         }
     }
 

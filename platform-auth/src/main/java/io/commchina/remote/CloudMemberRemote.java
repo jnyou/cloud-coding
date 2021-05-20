@@ -1,8 +1,8 @@
 package io.commchina.remote;
 
-import io.commchina.remote.resp.SocialUserReq;
-import io.commchina.remote.resp.UserLoginReq;
-import io.commchina.remote.resp.UserRegisterReq;
+import io.commchina.http.req.SocialUserReq;
+import io.commchina.http.req.UserLoginReq;
+import io.commchina.http.req.UserRegisterReq;
 import io.commchina.tools.R;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface CloudMemberRemote {
 
     @PostMapping("/member/member/regist")
-    R regist(@RequestBody UserRegisterReq vo);
+    R regist(@RequestBody UserRegisterReq userRegisterReq);
 
     @PostMapping("/member/member/login")
-    R login(@RequestBody UserLoginReq vo);
+    R login(@RequestBody UserLoginReq userLoginReq);
 
     @PostMapping("/member/member/oauth2/login")
-    R oauthLogin(@RequestBody SocialUserReq user);
+    R oauthLogin(@RequestBody SocialUserReq socialUserReq);
 
 
 }

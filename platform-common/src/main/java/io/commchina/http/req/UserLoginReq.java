@@ -1,4 +1,4 @@
-package io.commchina.remote.resp;
+package io.commchina.http.req;
 
 import lombok.Data;
 
