@@ -2,19 +2,19 @@ server:
   port: 20000
 spring:
   application:
-    name: auth-service
+    name: auth-core
   cloud:
     sentinel:
       transport:
         port: 8719
         dashboard: localhost:8333
-  thymeleaf:
-    cache: false
-  redis:
-    host: redis-server
-    port: 6379
-  session:
-    store-type: redis
+#  thymeleaf:
+#    cache: false
+#  redis:
+#    host: redis-server
+#    port: 6379
+#  session:
+#    store-type: redis
 
   # 服务追踪发现
   zipkin:

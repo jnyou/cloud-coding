@@ -1,10 +1,9 @@
 package io.commchina.cloudmember.controller;
 
-import io.commchina.cloudmember.biz.ThirdLoginStrategy;
+import io.commchina.cloudmember.biz.LoginChoose;
 import io.commchina.http.req.SocialUserReq;
 import io.commchina.http.resp.MemberInfoResp;
 import io.commchina.tools.R;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,16 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/oauth2")
 public class OAuth2LoginController {
 
-    @Autowired
-    ThirdLoginStrategy thirdLoginStrategy;
+    private LoginChoose loginChoose;
 
-    // MemberInfoResp
+    public OAuth2LoginController(LoginChoose loginChoose) {
+        this.loginChoose = loginChoose;
+    }
+
     @PostMapping("/login")
     public R oAuth2Login(@RequestBody SocialUserReq user) {
-        // 策略模式 TODO
-        thirdLoginStrategy.strategyLogin(user);
-        MemberInfoResp info = new MemberInfoResp();
-        return R.ok().put("info",info);
+        // 策略模式
+        MemberInfoResp memberInfoResp = loginChoose.getLoginType(user.getSocialType()).strategyLogin(user);
+        return R.ok().put("info", memberInfoResp);
     }
 
 

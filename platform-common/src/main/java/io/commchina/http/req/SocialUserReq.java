@@ -1,12 +1,15 @@
 package io.commchina.http.req;
 
+import io.commchina.http.enums.LoginEnum;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 
 /**
  * 用以封装社交登录认证后换回的令牌等信息
  */
 @Data
+@Accessors(chain = true)
 public class SocialUserReq {
 
     /**
@@ -27,5 +30,7 @@ public class SocialUserReq {
     private String uid;
 
     private String isRealName;
+
+    private LoginEnum socialType;
 
 }

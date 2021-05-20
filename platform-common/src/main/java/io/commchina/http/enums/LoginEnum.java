@@ -1,4 +1,4 @@
-package io.commchina.cloudmember.biz;
+package io.commchina.http.enums;
 
 /**
  * 代码千万行，注释第一行

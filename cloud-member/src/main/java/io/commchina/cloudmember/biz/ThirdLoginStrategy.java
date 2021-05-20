@@ -1,8 +1,8 @@
 package io.commchina.cloudmember.biz;
 
 
+import io.commchina.http.enums.LoginEnum;
 import io.commchina.http.req.SocialUserReq;
-import io.commchina.http.req.UserLoginReq;
 import io.commchina.http.resp.MemberInfoResp;
 
 /**

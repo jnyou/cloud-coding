@@ -1,21 +1,19 @@
 server:
-  port: 6810
+  port: 8060
+
 spring:
+  datasource:
+    username: root
+    password: root
+    url: jdbc:mysql://mysql-server:3306/db_mall_ums?serverTimezone=UTC&useSSL=false&allowMultiQueries=true&tinyInt1isBit=false&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
   application:
     name: member-core
-#  cloud:
-#    sentinel:
-#      transport:
-#        port: 8719
-#        dashboard: localhost:8333
-#  thymeleaf:
-#    cache: false
-#  redis:
-#    host: redis-server
-#    port: 6379
-#  session:
-#    store-type: redis
-
+  cloud:
+    sentinel:
+      transport:
+        port: 8719
+        dashboard: localhost:8333
   # 服务追踪发现
   zipkin:
     base-url: http://zipkin-server:9411/
@@ -33,3 +31,10 @@ log:
   level:
     org.springframework.cloud.openfeign: debug
     org.springframework.cloud.sleuth: debug
+
+# sql映射文件位置
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto

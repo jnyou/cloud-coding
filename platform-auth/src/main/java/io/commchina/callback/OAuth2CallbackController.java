@@ -3,6 +3,7 @@ package io.commchina.callback;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import io.commchina.constant.AuthServerConstant;
+import io.commchina.http.enums.LoginEnum;
 import io.commchina.http.resp.MemberInfoResp;
 import io.commchina.remote.CloudMemberRemote;
 import io.commchina.http.req.SocialUserReq;
@@ -57,7 +58,7 @@ public class OAuth2CallbackController {
         if(response.getStatusLine().getStatusCode() == 200){
             // 获取到了accessToken
             String json = EntityUtils.toString(response.getEntity());
-            SocialUserReq socialUser = JSON.parseObject(json, SocialUserReq.class);
+            SocialUserReq socialUser = JSON.parseObject(json, SocialUserReq.class).setSocialType(LoginEnum.WEIBO_LOGIN);
             // 判断该用户是登录还是注册
             R r = cloudMemberRemote.oauthLogin(socialUser);
             //2.1 远程调用成功，返回首页并携带用户信息
