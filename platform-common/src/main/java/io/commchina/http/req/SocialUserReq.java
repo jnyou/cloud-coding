@@ -31,6 +31,9 @@ public class SocialUserReq {
 
     private String isRealName;
 
+    /**
+     * 登录类型枚举
+     */
     private LoginEnum socialType;
 
 }

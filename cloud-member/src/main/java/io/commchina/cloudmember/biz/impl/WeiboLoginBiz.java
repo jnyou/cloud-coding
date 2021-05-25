@@ -1,11 +1,18 @@
 package io.commchina.cloudmember.biz.impl;
 
+import io.commchina.cloudmember.bean.MemberEntity;
 import io.commchina.cloudmember.biz.ThirdLoginStrategy;
+import io.commchina.cloudmember.service.MemberService;
 import io.commchina.http.enums.LoginEnum;
 import io.commchina.http.req.SocialUserReq;
 import io.commchina.http.resp.MemberInfoResp;
+import io.commchina.tools.R;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
  * 代码千万行，注释第一行
@@ -18,14 +25,17 @@ import org.springframework.stereotype.Service;
  **/
 @Service
 @Slf4j
-public class WeiboLogin implements ThirdLoginStrategy {
+public class WeiboLoginBiz implements ThirdLoginStrategy {
+
+    @Autowired
+    private MemberService memberService;
 
     @Override
     public MemberInfoResp strategyLogin(SocialUserReq socialUserReq) {
-        // TODO 微博登录逻辑
-
-        log.info("社交用户唯一ID：{}", socialUserReq.getUid());
-        return null;
+        MemberInfoResp memberInfoResp = new MemberInfoResp();
+        MemberEntity memberEntity = memberService.oauthLogin(socialUserReq);
+        if(Objects.nonNull(memberEntity)) BeanUtils.copyProperties(memberEntity,memberInfoResp);
+        return memberInfoResp;
     }
 
     @Override
