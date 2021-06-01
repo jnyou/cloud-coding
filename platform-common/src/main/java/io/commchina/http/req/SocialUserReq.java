@@ -25,11 +25,20 @@ public class SocialUserReq {
     private long expires_in;
 
     /**
-     * 该社交用户的唯一标识
+     * 微博社交用户的唯一标识
      */
     private String uid;
 
     private String isRealName;
+
+    /**
+     * 微信登录的openid
+     */
+    private String openid;
+    /**
+     * 微信社交用户的唯一标识
+     */
+    private String unionid;
 
     /**
      * 登录类型枚举

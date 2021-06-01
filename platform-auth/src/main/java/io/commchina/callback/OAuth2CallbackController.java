@@ -1,14 +1,17 @@
 package io.commchina.callback;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import io.commchina.constant.AuthServerConstant;
 import io.commchina.http.enums.LoginEnum;
 import io.commchina.http.resp.MemberInfoResp;
 import io.commchina.remote.CloudMemberRemote;
 import io.commchina.http.req.SocialUserReq;
 import io.commchina.tools.HttpUtils;
 import io.commchina.tools.R;
+import io.commchina.tools.RRException;
+import io.commchina.utils.ConstantPropertiesUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -59,34 +62,85 @@ public class OAuth2CallbackController {
             // 获取到了accessToken
             String json = EntityUtils.toString(response.getEntity());
             SocialUserReq socialUser = JSON.parseObject(json, SocialUserReq.class).setSocialType(LoginEnum.WEIBO_LOGIN);
-            // 判断该用户是登录还是注册
-            R r = cloudMemberRemote.oauthLogin(socialUser);
-            //2.1 远程调用成功，返回首页并携带用户信息
-            if (r.getCode() == 0) {
-                String jsonString = JSON.toJSONString(r.get("memberEntity"));
-                log.info("获取到的JSON字符串信息{}",jsonString);
-                MemberInfoResp memberInfoResp = JSON.parseObject(jsonString, new TypeReference<MemberInfoResp>() {
-                });
-                log.info("用户：{}登录成功",memberInfoResp.getNickname());
-                // 子域session共享问题，发session id 的时候指定为父级域名
-                session.setAttribute(AuthServerConstant.LOGIN_USER, memberInfoResp);
-                // 成功之后回到主页面
-//                return "redirect:http://gmall.com";
-                return memberInfoResp;
-            }else {
-                log.error("======登录失败======");
-                //2.2 否则返回登录页
-                errors.put("msg", "登录失败，请重试");
-                session.setAttribute("errors", errors);
-//                return "redirect:http://auth.gmall.com/login.html";
-                return null;
-            }
+            return remoteInvokeDataHandle(socialUser);
         } else {
             log.error("======登录失败======");
             // 失败跳转到登录页面
             errors.put("msg", "获得第三方授权失败，请重试");
             session.setAttribute("errors", errors);
 //            return "redirect:http://auth.gmall.com/login.html";
+            return null;
+        }
+    }
+    
+
+    /**
+     * 测试回调获取用户信息
+     *
+     * @param code
+     * @param state
+     * @param session
+     */
+//    @GetMapping("/api/ucenter/wx/callback")
+    @GetMapping("/oauth2.0/wechat/success")
+    public MemberInfoResp callback(String code, String state, HttpSession session) {
+
+        //得到授权临时票据code
+        log.info("code = " + code);
+        log.info("state = " + state);
+
+        // 从redis中将state获取出来，和当前传入的state作比较
+        // 如果一致则放行，如果不一致则抛出异常：非法访问
+
+        // 向认证服务器发送请求换取access_token
+        String baseAccessTokenUrl = "https://api.weixin.qq.com/sns/oauth2/access_token" +
+                "?appid=%s" +
+                "&secret=%s" +
+                "&code=%s" +
+                "&grant_type=authorization_code";
+        // 请求路径accessTokenUrl
+        String accessTokenUrl = String.format(baseAccessTokenUrl, ConstantPropertiesUtil.WX_OPEN_APP_ID,
+                ConstantPropertiesUtil.WX_OPEN_APP_SECRET,
+                code);
+        log.info("accessTokenUrl====" + accessTokenUrl);
+        // 使用httpclient发送请求，得到返回结果
+        String result = null;
+        try {
+            result = HttpUtil.get(accessTokenUrl);
+            log.info("accessToken=============" + result);
+        } catch (Exception e) {
+            throw new RRException("获取access_token失败",-1);
+        }
+        // json字符串 accessToken============={"access_token":"34_NYg-DpsIkG1fw3cfaq7vFiyVVbe1e-DuN1qnQ7CYXRIT_UMPkiXNfzHXOMQUtzSx7LFYK4HQmdM2hxgM55PLrR0iOYjLKJmXYTveFnJWWuI","expires_in":7200,"refresh_token":"34_vACdEUuu-6fcPMcYxs5iDQ2Subi485AjzewGUHV7lC-nwpSFiXPcs7OCXs2VlU8-JdWxV45LJ-JuNJ3DULV8yvV4dvfjlmELgNEGU9abg3U","openid":"o3_SC5-822XmQdwCDFYQkMAXHY78","scope":"snsapi_login","unionid":"oWgGz1FDH1k93xz9uvK1B1HPKa4c"}
+        log.info("accessToken=============" + result);
+
+        // 授权后得到的信息封装到SocialUserReq实例中
+        SocialUserReq socialUser = JSON.parseObject(result, SocialUserReq.class).setSocialType(LoginEnum.WECHAT_LOGIN);
+        String accessToken = socialUser.getAccess_token();
+        String openid = socialUser.getOpenid();
+        
+        // 判断该用户是登录还是注册
+        return remoteInvokeDataHandle(socialUser);
+
+        // 使用JWT根据用户对象生成token字符串  //因为端口号不同存在跨域问题，cookie不能跨域，所以这里使用url重写
+//        String jwtToken = JwtUtils.getJwtToken(member.getId(), member.getNickname());
+//        // 返回首页面
+//        return "redirect:http://localhost:3000?token=" + jwtToken;
+    }
+
+    public MemberInfoResp remoteInvokeDataHandle(SocialUserReq socialUser) {
+        // 判断该用户是登录还是注册
+        R r = cloudMemberRemote.oauthLogin(socialUser);
+        //2.1 远程调用成功，返回首页并携带用户信息
+        if (r.getCode() == 0) {
+            String jsonString = JSON.toJSONString(r.get("memberEntity"));
+            log.info("获取到的JSON字符串信息{}",jsonString);
+            MemberInfoResp memberInfoResp = JSON.parseObject(jsonString, new TypeReference<MemberInfoResp>() {
+            });
+            log.info("用户：{}登录成功",memberInfoResp.getNickname());
+            return memberInfoResp;
+        }else {
+            log.error("======登录失败======");
             return null;
         }
     }

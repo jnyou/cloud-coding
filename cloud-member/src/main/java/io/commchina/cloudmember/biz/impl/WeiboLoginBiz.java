@@ -33,7 +33,7 @@ public class WeiboLoginBiz implements ThirdLoginStrategy {
     @Override
     public MemberInfoResp strategyLogin(SocialUserReq socialUserReq) {
         MemberInfoResp memberInfoResp = new MemberInfoResp();
-        MemberEntity memberEntity = memberService.oauthLogin(socialUserReq);
+        MemberEntity memberEntity = memberService.oauth2WeiboLogin(socialUserReq);
         if(Objects.nonNull(memberEntity)) BeanUtils.copyProperties(memberEntity,memberInfoResp);
         return memberInfoResp;
     }

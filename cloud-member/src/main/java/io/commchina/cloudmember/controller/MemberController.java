@@ -32,15 +32,16 @@ public class MemberController {
 //    @Autowired
 //    private CouponFeignService couponFeignService;
 
-    @PostMapping("/oauth2/login")
-    public R oauthLogin(@RequestBody SocialUserReq user) {
-        MemberEntity memberEntity = memberService.oauthLogin(user);
-        if(null != memberEntity){
-            return R.ok().put("memberEntity",memberEntity);
-        } else {
-            return R.error(BizCodeEnume.LOGINACCT_PASSWORD_INVAILD_EXCEPTION.getCode(),BizCodeEnume.LOGINACCT_PASSWORD_INVAILD_EXCEPTION.getMsg());
-        }
-    }
+    // 旧第三方登录方式
+//    @PostMapping("/oauth2/login")
+//    public R oauthLogin(@RequestBody SocialUserReq user) {
+//        MemberEntity memberEntity = memberService.oauthLogin(user);
+//        if(null != memberEntity){
+//            return R.ok().put("memberEntity",memberEntity);
+//        } else {
+//            return R.error(BizCodeEnume.LOGINACCT_PASSWORD_INVAILD_EXCEPTION.getCode(),BizCodeEnume.LOGINACCT_PASSWORD_INVAILD_EXCEPTION.getMsg());
+//        }
+//    }
 
     /**
      * 测试openFeign组件

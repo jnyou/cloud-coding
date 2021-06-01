@@ -29,6 +29,8 @@ public interface MemberService extends IService<MemberEntity> {
 
     MemberEntity login(UserLoginReq vo);
 
-    MemberEntity oauthLogin(SocialUserReq user);
+    MemberEntity oauth2WeiboLogin(SocialUserReq user);
+
+    MemberEntity oauth2WechatLogin(SocialUserReq user);
 }
 

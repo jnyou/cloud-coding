@@ -1,5 +1,7 @@
 package io.commchina.cloudmember.service.impl;
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -13,12 +15,15 @@ import io.commchina.cloudmember.exception.PhoneExistException;
 import io.commchina.cloudmember.exception.UsernameExistException;
 import io.commchina.cloudmember.service.MemberLevelService;
 import io.commchina.cloudmember.service.MemberService;
+import io.commchina.http.enums.UserSourceType;
 import io.commchina.http.req.SocialUserReq;
 import io.commchina.http.req.UserLoginReq;
 import io.commchina.http.req.UserRegisterReq;
 import io.commchina.tools.HttpUtils;
 import io.commchina.tools.PageUtils;
 import io.commchina.tools.Query;
+import io.commchina.tools.RRException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +33,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@Slf4j
 @Service("memberService")
 public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> implements MemberService {
 
@@ -106,12 +111,12 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
     }
 
     /**
-     * 社交登录
+     * 社交登录 -- 微博
      * @param user
      * @Author JnYou
      */
     @Override
-    public MemberEntity oauthLogin(SocialUserReq socialUser) {
+    public MemberEntity oauth2WeiboLogin(SocialUserReq socialUser) {
         // 登录和注册合并逻辑
         String uid = socialUser.getUid();
         MemberEntity memberEntity = this.getOne(new QueryWrapper<MemberEntity>().eq("uid", uid));
@@ -132,7 +137,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
                 String gender = jsonObject.getString("gender");
                 String profile_image_url = jsonObject.getString("profile_image_url");
                 memberEntity.setNickname(name);
-                memberEntity.setGender("m".equals(gender)?0:1);
+                memberEntity.setGender("m".equals(gender)?1:2);
                 memberEntity.setHeader(profile_image_url);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -144,11 +149,67 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             memberEntity.setAccessToken(socialUser.getAccess_token());
             memberEntity.setUid(socialUser.getUid());
             memberEntity.setExpiresIn(socialUser.getExpires_in());
+            memberEntity.setSourceType(UserSourceType.WEIBO_LOGIN.getCode());
             this.save(memberEntity);
         }else {
             //2 否则更新令牌等信息并返回
             memberEntity.setAccessToken(socialUser.getAccess_token());
             memberEntity.setUid(socialUser.getUid());
+            memberEntity.setExpiresIn(socialUser.getExpires_in());
+            this.updateById(memberEntity);
+        }
+        return memberEntity;
+    }
+
+    /**
+     * 社交登录 -- 微信
+     * @param user
+     * @Author JnYou
+     */
+    @Override
+    public MemberEntity oauth2WechatLogin(SocialUserReq socialUser) {
+        String accessToken = socialUser.getAccess_token();
+        String openid = socialUser.getOpenid();
+        //查询数据库当前用用户是否曾经使用过微信登录
+        MemberEntity memberEntity = this.getOne(new QueryWrapper<MemberEntity>().eq("uid", socialUser.getUnionid()));
+        if (null == memberEntity) {
+            log.info("新用户注册，保存信息");
+
+            // 通过accessToken和openid访问微信的资源服务器，获取用户信息
+            String baseUserInfoUrl = "https://api.weixin.qq.com/sns/userinfo" +
+                    "?access_token=%s" +
+                    "&openid=%s";
+            String userInfoUrl = String.format(baseUserInfoUrl, accessToken, openid);
+            // 发送请求
+            String resultUserInfo = null;
+            try {
+                resultUserInfo = HttpUtil.get(userInfoUrl);
+                log.info("resultUserInfo==========" + resultUserInfo);
+            } catch (Exception e) {
+                throw new RRException("获取用户信息失败",-1);
+            }
+            //解析json
+            JSONObject jsonObject = JSON.parseObject(resultUserInfo);
+            //获得昵称，性别，头像
+            String nickname = jsonObject.getString("nickname");
+            String headimgurl = jsonObject.getString("headimgurl");
+            String sex = jsonObject.getString("sex");
+            String province = jsonObject.getString("province");
+            String city = jsonObject.getString("city");
+            String country = jsonObject.getString("country");
+
+            memberEntity.setNickname(nickname);
+            memberEntity.setGender(Convert.toInt(sex));
+            memberEntity.setHeader(headimgurl);
+            memberEntity.setSourceType(UserSourceType.WECHAT_LOGIN.getCode());
+            memberEntity.setCity(city);
+            //向数据库中插入一条记录
+            memberEntity.setUid(socialUser.getUnionid());
+            this.save(memberEntity);
+        }else {
+            //2 否则更新令牌等信息并返回
+            memberEntity.setAccessToken(socialUser.getAccess_token());
+            memberEntity.setUid(socialUser.getUnionid());
             memberEntity.setExpiresIn(socialUser.getExpires_in());
             this.updateById(memberEntity);
         }
