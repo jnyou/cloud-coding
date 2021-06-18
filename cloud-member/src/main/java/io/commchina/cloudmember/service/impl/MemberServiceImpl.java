@@ -15,6 +15,7 @@ import io.commchina.cloudmember.exception.PhoneExistException;
 import io.commchina.cloudmember.exception.UsernameExistException;
 import io.commchina.cloudmember.service.MemberLevelService;
 import io.commchina.cloudmember.service.MemberService;
+import io.commchina.constant.GitHubConstant;
 import io.commchina.http.enums.UserSourceType;
 import io.commchina.http.req.SocialUserReq;
 import io.commchina.http.req.UserLoginReq;
@@ -73,7 +74,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
     @Override
     public void checkPhoneUnique(String phone) throws PhoneExistException {
         Integer count = this.baseMapper.selectCount(Wrappers.<MemberEntity>lambdaQuery().eq(MemberEntity::getMobile, phone));
-        if(count > 0){
+        if (count > 0) {
             throw new PhoneExistException();
         }
     }
@@ -81,7 +82,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
     @Override
     public void checkUserNameUnique(String username) throws UsernameExistException {
         Integer count = this.baseMapper.selectCount(Wrappers.<MemberEntity>lambdaQuery().eq(MemberEntity::getUsername, username));
-        if(count > 0){
+        if (count > 0) {
             throw new UsernameExistException();
         }
     }
@@ -93,7 +94,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
                 .or()
                 .eq(MemberEntity::getMobile, vo.getLoginAccount())
         );
-        if(null == memberEntity){
+        if (null == memberEntity) {
             // 登录失败
             return null;
         } else {
@@ -102,7 +103,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             // 第一个传递过来的明文密码，第二个是数据库存储的密文密码进行匹配
             boolean matches = passwordEncoder.matches(vo.getPassword(), passwordDb);
-            if(matches){
+            if (matches) {
                 return memberEntity;
             } else {
                 return null;
@@ -112,6 +113,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
 
     /**
      * 社交登录 -- 微博
+     *
      * @param user
      * @Author JnYou
      */
@@ -123,7 +125,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         if (memberEntity == null) {
             //1 如果之前未登陆过，则查询其社交信息进行注册
             Map<String, String> query = new HashMap<>();
-            query.put("access_token",socialUser.getAccess_token());
+            query.put("access_token", socialUser.getAccess_token());
             query.put("uid", uid);
             //封装用户信息并保存
             memberEntity = new MemberEntity();
@@ -137,7 +139,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
                 String gender = jsonObject.getString("gender");
                 String profile_image_url = jsonObject.getString("profile_image_url");
                 memberEntity.setNickname(name);
-                memberEntity.setGender("m".equals(gender)?1:2);
+                memberEntity.setGender("m".equals(gender) ? 1 : 2);
                 memberEntity.setHeader(profile_image_url);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -151,7 +153,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             memberEntity.setExpiresIn(socialUser.getExpires_in());
             memberEntity.setSourceType(UserSourceType.WEIBO_LOGIN.getCode());
             this.save(memberEntity);
-        }else {
+        } else {
             //2 否则更新令牌等信息并返回
             memberEntity.setAccessToken(socialUser.getAccess_token());
             memberEntity.setUid(socialUser.getUid());
@@ -163,6 +165,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
 
     /**
      * 社交登录 -- 微信
+     *
      * @param user
      * @Author JnYou
      */
@@ -184,9 +187,9 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             String resultUserInfo = null;
             try {
                 resultUserInfo = HttpUtil.get(userInfoUrl);
-                log.info("resultUserInfo==========" + resultUserInfo);
+                log.info("resultUserInfo{}", resultUserInfo);
             } catch (Exception e) {
-                throw new RRException("获取用户信息失败",-1);
+                throw new RRException("获取用户信息失败", -1);
             }
             //解析json
             JSONObject jsonObject = JSON.parseObject(resultUserInfo);
@@ -205,14 +208,68 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             memberEntity.setCity(city);
             //向数据库中插入一条记录
             memberEntity.setUid(socialUser.getUnionid());
+            memberEntity.setAccessToken(socialUser.getAccess_token());
+            memberEntity.setUid(socialUser.getUnionid());
+            memberEntity.setExpiresIn(socialUser.getExpires_in());
             this.save(memberEntity);
-        }else {
+        } else {
             //2 否则更新令牌等信息并返回
             memberEntity.setAccessToken(socialUser.getAccess_token());
             memberEntity.setUid(socialUser.getUnionid());
             memberEntity.setExpiresIn(socialUser.getExpires_in());
             this.updateById(memberEntity);
         }
+        return memberEntity;
+    }
+
+    /**
+     * 社交登录 -- GitHub TODO--待测试
+     *
+     * @param user
+     * @Author JnYou
+     */
+    @Override
+    public MemberEntity oauth2GithubLogin(SocialUserReq socialUser) {
+        String token = socialUser.getAccess_token();
+
+        MemberEntity memberEntity = this.getOne(Wrappers.<MemberEntity>lambdaQuery().eq(MemberEntity::getUid, socialUser.getId()));
+        if (null == memberEntity) {
+            log.info("新用户注册，保存信息");
+
+            //根据token发送请求获取登录人的信息  ，通过令牌去获得用户信息
+            String userinfo_url = GitHubConstant.USER_INFO_URL.replace("TOKEN", token);
+            // 发送请求
+            String resultUserInfo = null;
+            try {
+                resultUserInfo = HttpUtil.get(userinfo_url);
+                log.info("resultUserInfo{}", resultUserInfo);
+            } catch (Exception e) {
+                throw new RRException("获取用户信息失败", -1);
+            }
+            //解析json
+            JSONObject jsonObject = JSON.parseObject(resultUserInfo);
+            //获得昵称，性别，头像
+            String nickname = jsonObject.getString("name");
+            String headimgurl = jsonObject.getString("avatar_url");
+            String email = jsonObject.getString("email");
+
+            memberEntity.setNickname(nickname);
+            memberEntity.setHeader(headimgurl);
+            memberEntity.setEmail(email);
+            memberEntity.setSourceType(UserSourceType.WECHAT_LOGIN.getCode());
+            //向数据库中插入一条记录
+            memberEntity.setUid(Convert.toStr(socialUser.getId()));
+            memberEntity.setAccessToken(socialUser.getAccess_token());
+            memberEntity.setExpiresIn(socialUser.getExpires_in());
+            this.save(memberEntity);
+        } else {
+            //2 否则更新令牌等信息并返回
+            memberEntity.setAccessToken(socialUser.getAccess_token());
+            memberEntity.setUid(Convert.toStr(socialUser.getId()));
+            memberEntity.setExpiresIn(socialUser.getExpires_in());
+            this.updateById(memberEntity);
+        }
+
         return memberEntity;
     }
 

@@ -11,6 +11,6 @@ package io.commchina.http.enums;
  **/
 public enum LoginEnum {
 
-    WECHAT_LOGIN,WEIBO_LOGIN
+    WECHAT_LOGIN,WEIBO_LOGIN,GITHUB_LONGN
 
 }
